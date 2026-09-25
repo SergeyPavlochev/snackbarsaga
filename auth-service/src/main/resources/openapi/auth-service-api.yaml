@@ -1,0 +1,175 @@
+openapi: 3.0.3
+info:
+  title: Auth Service API
+  version: 1.0.0
+tags:
+  - name: Authentication
+    description: Методы аутентификации
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      operationId: register
+      summary: Зарегистрировать нового пользователя в приложении
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequestDto'
+      responses:
+        201:
+          description: Пользователь успешно зарегистрирован в приложении
+        400:
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        409:
+          description: Пользователь уже существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        500:
+          description: Непредвиденная ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      operationId: login
+      summary: Вход пользователя в приложение
+      description: Метод по логину и паролю проверяет, что пользователь существует, и выдает JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestDto'
+      responses:
+        200:
+          description: Пользователь вошел в системе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponseDto'
+        400:
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        401:
+          description: Пользователь не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        500:
+          description: Непредвиденная ошибка сервера
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+  /auth/validate:
+    get:
+      tags:
+        - Authentication
+      operationId: validate
+      summary: Валидация JWT
+      description:
+        Проверяет токен из заголовка Authorization или cookie.
+        При успехе возвращает ID пользователя в заголовке X-User-Id для API Gateway.
+      parameters:
+        - name: Authorization
+          in: header
+          description: Заголовок авторизации в формате 'Bearer <token>'
+          required: false
+          schema:
+            type: string
+        - name: token
+          in: cookie
+          description: Cookie с именем 'token' (используется, если нет заголовка Authorization)
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: Токен валиден
+          headers:
+            X-User-Id:
+              description: Идентификатор пользователя (UUID)
+              schema:
+                type: string
+                format: uuid
+        401:
+          description: Токен отсутствует, невалиден или истек
+
+components:
+  schemas:
+    ErrorResponseDto:
+      type: object
+      description: Стандартный формат ответа при возникновении ошибки
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Числовой код ошибки (например, HTTP статус или внутренний код)
+          example: 400
+        message:
+          type: string
+          description: Человеко-читаемое описание ошибки
+          example: "Неверный формат электронной почты"
+    RegisterRequestDto:
+      type: object
+      description: Запрос на регистрацию нового пользователя
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Электронная почта пользователя
+          example: "user@example.com"
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          description: Пароль пользователя (от 8 до 100 символов)
+          example: "SuperSecretPassword123!"
+    LoginRequestDto:
+      type: object
+      description: Запрос на аутентификацию пользователя
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Электронная почта пользователя
+          example: "user@example.com"
+        password:
+          type: string
+          description: Пароль пользователя
+          example: "SuperSecretPassword123!"
+    AuthResponseDto:
+      type: object
+      description: Ответ при успешной аутентификации или регистрации
+      properties:
+        token:
+          type: string
+          description: JWT токен авторизации
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U"
+        userId:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор пользователя
+          example: "123e4567-e89b-12d3-a456-426614174000"

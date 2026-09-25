@@ -1,0 +1,776 @@
+{
+	"info": {
+		"_postman_id": "cef3bab9-66b4-4b3f-8f13-fa92e772f522",
+		"name": "Snackbar Saga Tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "56544683",
+		"_collection_link": "https://sergeypavlochev-8636449.postman.co/workspace/%D0%9B%D0%B5%D0%BE%D0%BF%D0%BE%D0%BB%D1%8C%D0%B4-%D0%9A%D0%BE%D1%82%D0%BE%D0%B2's-Workspace~ca577888-2349-4a2d-8c7a-43c7f10d1b50/collection/56544683-cef3bab9-66b4-4b3f-8f13-fa92e772f522?action=share&source=collection_link&creator=56544683"
+	},
+	"item": [
+		{
+			"name": "1. Регистрация нового пользователя",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 201', function () { pm.response.to.have.status(201); });",
+							"const email = pm.request.body ? JSON.parse(pm.request.body).email : '';",
+							"pm.environment.set('testEmail', email);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"testuser_{{$randomInt}}@example.com\",\n  \"password\": \"SuperSecretPassword123!\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/register",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "2. Вход пользователя и получение JWT",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 200', function () { pm.response.to.have.status(200); });",
+							"const jsonData = pm.response.json();",
+							"pm.test('В ответе присутствуют token и userId', function () {",
+							"    pm.expect(jsonData).to.have.property('token');",
+							"    pm.expect(jsonData).to.have.property('userId');",
+							"    pm.environment.set('token', jsonData.token);",
+							"    pm.environment.set('userId', jsonData.userId);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"SuperSecretPassword123!\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. Создание карточки товара",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 201', function () { pm.response.to.have.status(201); });",
+							"const jsonData = pm.response.json();",
+							"pm.environment.set('itemSku', jsonData.sku);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"itemSku\": \"{{$guid}}\",\n  \"quantity\": 100\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/warehouse/api/v1/items",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"warehouse",
+						"api",
+						"v1",
+						"items"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4a. Создание карточки курьера",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 201', function () { pm.response.to.have.status(201); });",
+							"const jsonData = pm.response.json();",
+							"pm.environment.set('courierZone', jsonData.zone);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Test Courier\",\n  \"zone\": \"zone_{{$randomInt}}\",\n  \"maxOrdersSlot\": 10\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/delivery/api/v1/couriers",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"delivery",
+						"api",
+						"v1",
+						"couriers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4b. Создание временного слота доставки",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 201', function () { pm.response.to.have.status(201); });",
+							"const jsonData = pm.response.json();",
+							"pm.environment.set('slotId', jsonData.id);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"startTime\": \"2026-10-15T12:00:00\",\n  \"endTime\": \"2026-10-15T14:00:00\",\n  \"zone\": \"{{courierZone}}\",\n  \"maxCapacity\": 10\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/delivery/api/v1/delivery-slots",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"delivery",
+						"api",
+						"v1",
+						"delivery-slots"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Получить счет пользователя",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 200', function () { pm.response.to.have.status(200); });",
+							"const jsonData = pm.response.json();",
+							"pm.environment.set('accountId', jsonData.id);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/billing/api/v1/accounts",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"billing",
+						"api",
+						"v1",
+						"accounts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "6. Пополнить счет на 2000 рублей",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 200', function () { pm.response.to.have.status(200); });",
+							"pm.test('Баланс счета составляет 2000 рублей', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(parseFloat(jsonData.balance)).to.eql(2000);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": \"2000\",\n  \"currency\": \"RUB\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/billing/api/v1/accounts/{{accountId}}/deposit",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"billing",
+						"api",
+						"v1",
+						"accounts",
+						"{{accountId}}",
+						"deposit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "7. Создать заказ на 800 рублей (статус заказа PENDING)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 202', function () { pm.response.to.have.status(202); });",
+							"const jsonData = pm.response.json();",
+							"pm.test('Статус заказа PENDING', function () {",
+							"    pm.expect(jsonData.status).to.eql('PENDING');",
+							"});",
+							"pm.environment.set('orderId1', jsonData.id);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": \"800\",\n  \"currency\": \"RUB\",\n  \"itemSku\": \"{{itemSku}}\",\n  \"quantity\": 1,\n  \"deliverySlot\": \"{{slotId}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/orders/api/v1/orders",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"orders",
+						"api",
+						"v1",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "8. Получить заказ 1 (статус заказа CONFIRMED)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const waitFor = (ms) => new Promise(resolve => setTimeout(resolve, ms));",
+							"",
+							"pm.test('Код статуса 200', function () { pm.response.to.have.status(200); });",
+							"pm.test('Статус заказа CONFIRMED', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.status).to.eql('CONFIRMED');",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/orders/api/v1/orders/{{orderId1}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"orders",
+						"api",
+						"v1",
+						"orders",
+						"{{orderId1}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "9. Получить счет (Проверка баланса 1200)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 200', function () { pm.response.to.have.status(200); });",
+							"pm.test('Баланс в точности равен 1200 рублей', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(parseFloat(jsonData.balance)).to.eql(1200);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/billing/api/v1/accounts",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"billing",
+						"api",
+						"v1",
+						"accounts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "10. Получить оповещения (Проверка ORDER_CONFIRMED)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 200', function () { pm.response.to.have.status(200); });",
+							"pm.test('Есть оповещение об успешном подтверждении заказа', function () {",
+							"    const jsonData = pm.response.json();",
+							"    const hasSuccess = jsonData.some(n => n.type === 'ORDER_CONFIRMED');",
+							"    pm.expect(hasSuccess).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/notifications/api/v1/notifications?limit=20",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"notifications",
+						"api",
+						"v1",
+						"notifications"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "20"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "11. Создать заказ на 1500 рублей (Недостаточно средств)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 202', function () { pm.response.to.have.status(202); });",
+							"const jsonData = pm.response.json();",
+							"pm.environment.set('orderId2', jsonData.id);"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"amount\": \"1500\",\n  \"currency\": \"RUB\",\n  \"itemSku\": \"{{itemSku}}\",\n  \"quantity\": 1,\n  \"deliverySlot\": \"{{slotId}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/orders/api/v1/orders",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"orders",
+						"api",
+						"v1",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "12a. Получить заказ 2 (статус заказа CANCELLED)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса', function () { pm.response.to.have.status(200); });",
+							"pm.test('Статус заказа CANCELLED', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(jsonData.status).to.eql('CANCELLED');",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/orders/api/v1/orders/{{orderId2}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"orders",
+						"api",
+						"v1",
+						"orders",
+						"{{orderId2}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "12b. Получить счет (Проверка, что баланс остался 1200)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 200', function () { pm.response.to.have.status(200); });",
+							"pm.test('Баланс равен 1200 рублей', function () {",
+							"    const jsonData = pm.response.json();",
+							"    pm.expect(parseFloat(jsonData.balance)).to.eql(1200);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/billing/api/v1/accounts",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"billing",
+						"api",
+						"v1",
+						"accounts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "13. Получить оповещения (Проверка ORDER_CANCELLED)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Код статуса 200', function () { pm.response.to.have.status(200); });",
+							"pm.test('Есть оповещение об отмене заказа', function () {",
+							"    const jsonData = pm.response.json();",
+							"    const hasFail = jsonData.some(n => n.type === 'ORDER_CANCELLED');",
+							"    pm.expect(hasFail).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/notifications/api/v1/notifications?limit=20",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"notifications",
+						"api",
+						"v1",
+						"notifications"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "20"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://arch.homework"
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "token",
+			"value": ""
+		},
+		{
+			"key": "itemSku",
+			"value": ""
+		},
+		{
+			"key": "courierZone",
+			"value": ""
+		},
+		{
+			"key": "slotId",
+			"value": ""
+		},
+		{
+			"key": "accountId",
+			"value": ""
+		},
+		{
+			"key": "orderId1",
+			"value": ""
+		},
+		{
+			"key": "orderId2",
+			"value": ""
+		}
+	]
+}
