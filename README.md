@@ -64,6 +64,10 @@
 
 ![saga.png](images/saga.png)
 
+Статусная модель заказа:
+
+![order_status.png](images/order_status_model.png)
+
 ## Установка приложения
 
 ### Подготовка
